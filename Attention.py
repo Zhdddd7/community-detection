@@ -94,8 +94,26 @@ class AttentionGNN(nn.Module):
     def predict(self, logits):
         return F.softmax(logits, dim=-1)
 
-# 使用示例
-# 创建 NetworkX 图对象
+
+# Loss Function
+def modularity_loss(U, A):
+    d = A.sum(1)
+    D = torch.outer(d, d) / A.sum()
+    B = A - D
+    M = -torch.trace(torch.matmul(U.T, torch.matmul(B, U))) / torch.norm(A, 1)
+    return M
+
+def regularizer(U, C):
+    reg = torch.sum((U.sum(0) - 1/C)**2)
+    return reg
+
+def community_detection_loss(U, A, C, lambda_reg):
+    M = modularity_loss(U, A)
+    R = regularizer(U, C)
+    loss = M + lambda_reg * R
+    return loss
+
+# build a graph
 from dataCenter import data_generator
 data = data_generator()
 m = data.shape[1]
@@ -103,7 +121,7 @@ labels = [f'feature_{i}' for i in range(m)]
 from communityDetection import Community
 test_c = Community(data, labels)
 cor= test_c.get_cor_matrix()
-from utils import k_tau_network, epsilon_network, draw_custom_colored_graph
+from utils import k_tau_network
 tau = 0.7
 K = 5
 G = k_tau_network(cor,tau, K)
@@ -120,17 +138,43 @@ node_features = node_features.unsqueeze(0)
 
 # 初始化模型
 num_heads = 8
-num_iters = 3
+num_iters = 5
 model = AttentionGNN(num_classes, num_nodes, emb_size, hidden, num_heads, num_iters)
 
-# 前向传播
+
+# 训练模型
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+lambda_reg = 0.5
+
+
+def train(model, node_features, num_epochs, saved = False):
+    for epoch in range(num_epochs):
+        model.train()
+        optimizer.zero_grad()
+        logits = model(torch.tensor(adj, dtype=torch.float32).unsqueeze(0), node_features)
+        U = model.predict(logits).squeeze(0)  # 节点的社区分布概率
+        loss = community_detection_loss(U, torch.tensor(adj, dtype=torch.float32), num_classes, lambda_reg)
+        loss.backward()
+        optimizer.step()
+        print(f'Epoch {epoch + 1}, Loss: {loss.item()}')
+        if saved:
+            if (epoch +1) % 100 ==0:
+                file_path = "./models/"
+                torch.save(model, f"{file_path}attention_{epoch}_model.pt")
+                print(f"the {epoch} model is saved.")
+
+num_epochs = 300
+# trian the model and save the model to ./models
+# train(model, node_features, num_epochs, True)
+
+# 输出最终的社区分配
+model_file = "./models/attention_299_model.pt"
+model = torch.load(model_file)
 logits = model(torch.tensor(adj, dtype=torch.float32).unsqueeze(0), node_features)
 predictions = model.predict(logits)
-pre = predictions.squeeze(dim =0)
-labels = pre.argmax(dim = 1)
+pre = predictions.squeeze(dim=0)
+labels = pre.argmax(dim=1)
 pre = labels.tolist()
 from utils import print_labels
 print("----The Attention Graph prediction----")
 print_labels(pre)
-
-
