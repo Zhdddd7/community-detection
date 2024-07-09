@@ -45,27 +45,27 @@ def data_generator(sample_dim = 1000):
     
     return res
 
-data = data_generator()
-m = data.shape[1]
-labels = [f'feature_{i}' for i in range(m)]
-from communityDetection import Community
-test_c = Community(data, labels)
-cor= test_c.get_cor_matrix()
+# data = data_generator()
+# m = data.shape[1]
+# labels = [f'feature_{i}' for i in range(m)]
+# from communityDetection import Community
+# test_c = Community(data, labels)
+# cor= test_c.get_cor_matrix()
 
 # test on graph-building 
 
-from utils import k_tau_network, epsilon_network, draw_custom_colored_graph
-tau = 0.7
-K = 5
-epsilon = 0.5
-G = k_tau_network(cor,tau, K)
+# from utils import k_tau_network, epsilon_network, draw_custom_colored_graph
+# tau = 0.7
+# K = 5
+# epsilon = 0.5
+# G = k_tau_network(cor,tau, K)
 # G = epsilon_network(cor, epsilon)
 
-color_groups = [
-    [0, 1, 4, 9, 12, 13, 8, 19],  # Group 1
-    [2, 3, 7, 8, 11, 15, 16, 17],  # Group 2
-    [5, 6, 10, 14]                 # Group 3
-]
+# color_groups = [
+#     [0, 1, 4, 9, 12, 13, 8, 19],  # Group 1
+#     [2, 3, 7, 8, 11, 15, 16, 17],  # Group 2
+#     [5, 6, 10, 14]                 # Group 3
+# ]
 
 # draw_custom_colored_graph(G, color_groups)
 # com_lou = test_c.BGLL(G)
@@ -100,29 +100,31 @@ import leidenalg
 #             [3, 4, 5, 6, 10, 11, 13, 14, 15, 16]
 #             ]
 # draw_custom_colored_graph(G, Node2vec)
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.cluster import SpectralBiclustering
+# from sklearn.preprocessing import StandardScaler
+# from sklearn.metrics.pairwise import cosine_similarity
+# from sklearn.cluster import SpectralBiclustering
 
-scaler = StandardScaler()
-data_scaled = scaler.fit_transform(data)
-# 计算特征之间的相似性矩阵（余弦相似性）
-similarity_matrix = cosine_similarity(data_scaled.T)
-# 使用双向聚类对特征进行聚类
-n_clusters = 4  
-bicluster = SpectralBiclustering(n_clusters=n_clusters, method='log')
-bicluster.fit(similarity_matrix)
-# 聚类结果
-feature_labels = bicluster.row_labels_
+# scaler = StandardScaler()
+# data_scaled = scaler.fit_transform(data)
+# # 计算特征之间的相似性矩阵（余弦相似性）
+# similarity_matrix = cosine_similarity(data_scaled.T)
+# # 使用双向聚类对特征进行聚类
+# n_clusters = 4  
+# bicluster = SpectralBiclustering(n_clusters=n_clusters, method='log')
+# bicluster.fit(similarity_matrix)
+# # 聚类结果
+# feature_labels = bicluster.row_labels_
 
-# 打印每个特征的聚类标签
-feature_names = [f"feature{i}" for i in range(data.shape[1])]
-feature_cluster_mapping = pd.DataFrame({'Feature': feature_names, 'Cluster': feature_labels})
-feature_cluster_mapping = feature_cluster_mapping.sort_values(by='Cluster')
+# # 打印每个特征的聚类标签
+# feature_names = [f"feature{i}" for i in range(data.shape[1])]
+# feature_cluster_mapping = pd.DataFrame({'Feature': feature_names, 'Cluster': feature_labels})
+# feature_cluster_mapping = feature_cluster_mapping.sort_values(by='Cluster')
 
-# 格式化输出
-unique_labels = set(feature_labels)
-print("----SpectralBiclustering检测结果为----")
-for cluster in unique_labels:
-    features_in_cluster = feature_cluster_mapping[feature_cluster_mapping['Cluster'] == cluster]['Feature'].tolist()
-    print(f"类别 {cluster}: {', '.join(features_in_cluster)}")
+# # 格式化输出
+# unique_labels = set(feature_labels)
+# print("----SpectralBiclustering检测结果为----")
+# for cluster in unique_labels:
+#     features_in_cluster = feature_cluster_mapping[feature_cluster_mapping['Cluster'] == cluster]['Feature'].tolist()
+#     print(f"类别 {cluster}: {', '.join(features_in_cluster)}")
+
+
