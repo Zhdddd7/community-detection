@@ -94,7 +94,6 @@ class AttentionGNN(nn.Module):
     def predict(self, logits):
         return F.softmax(logits, dim=-1)
 
-
 # Loss Function
 def modularity_loss(U, A):
     d = A.sum(1)
@@ -135,17 +134,16 @@ hidden = 128
 num_classes = 3
 node_features = torch.Tensor(data.T)
 node_features = node_features.unsqueeze(0)
+print(node_features.shape)
 
 # 初始化模型
 num_heads = 8
 num_iters = 5
 model = AttentionGNN(num_classes, num_nodes, emb_size, hidden, num_heads, num_iters)
 
-
 # 训练模型
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 lambda_reg = 0.5
-
 
 def train(model, node_features, num_epochs, saved = False):
     for epoch in range(num_epochs):

@@ -109,46 +109,4 @@ def print_labels(labels):
         result[value].append(index)
     print(result)
 
-import numpy as np
-import networkx as nx
-import scipy.sparse as sp
-from scipy.sparse.linalg import eigsh
-
-def build_unweighted_bethe_hessian(adj, associative=True, r=None):
-    n = adj.shape[0]
-    degrees = np.array(adj.sum(axis=1)).flatten()
-    if r is None:
-        r = np.sqrt(degrees.mean())
-    
-    if associative:
-        D_r = sp.diags(degrees - r)
-    else:
-        D_r = sp.diags(degrees + r)
-    
-    I = sp.identity(n)
-    H = (r**2 - 1) * I + D_r - adj
-    return H
-
-def bethe_hessian_node_features(adj, emb_size, associative=True):
-    H = build_unweighted_bethe_hessian(adj, associative=associative)
-    vals, vecs = eigsh(H, k=emb_size, which="SA")
-    return vecs.astype(np.float32)
-
-def graph2graph_tuple(graph_nx, node_features):
-    graph_nx = graph_nx.to_directed()
-    n = len(graph_nx.nodes)
-    m = len(graph_nx.edges)
-    senders, receivers = zip(*graph_nx.edges)
-    
-    dt = {
-        "nodes": node_features if node_features is not None else [None for _ in range(n)],
-        "edges": None,
-        "receivers": np.array(receivers, dtype=np.int32),
-        "senders": np.array(senders, dtype=np.int32),
-        "globals": None,
-        "n_node": n,
-        "n_edge": m
-    }
-    
-    return dt
    
