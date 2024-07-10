@@ -43,6 +43,9 @@ class GraphAttention(nn.Module):
         vals, keys, queries = self.head(inputs)
         
         # Compute attention scores
+        # queries = [batch_size, num_nodes, num_heads, head_dim]
+        # keys = [batch_size, num_nodes, num_heads, head_dim]
+        # attention_scores = [batch_size, num_nodes,num_nodes_2, num_heads]
         attention_scores = torch.einsum('bnqh,bmqh->bnmq', queries, keys)
         attention_scores = attention_scores / np.sqrt(self.head_dim)
         attention_scores = F.softmax(attention_scores, dim=-1)
@@ -94,24 +97,7 @@ class AttentionGNN(nn.Module):
     def predict(self, logits):
         return F.softmax(logits, dim=-1)
 
-# Loss Function
-def modularity_loss(U, A):
-    d = A.sum(1)
-    D = torch.outer(d, d) / A.sum()
-    B = A - D
-    M = -torch.trace(torch.matmul(U.T, torch.matmul(B, U))) / torch.norm(A, 1)
-    return M
-
-def regularizer(U, C):
-    reg = torch.sum((U.sum(0) - 1/C)**2)
-    return reg
-
-def community_detection_loss(U, A, C, lambda_reg):
-    M = modularity_loss(U, A)
-    R = regularizer(U, C)
-    loss = M + lambda_reg * R
-    return loss
-
+from utils import community_detection_loss
 # build a graph
 from dataCenter import data_generator
 data = data_generator()

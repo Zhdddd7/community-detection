@@ -1,6 +1,7 @@
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
+import torch
 
 def k_tau_network(corr_matrix, tau, K, draw = False):
     """
@@ -109,4 +110,20 @@ def print_labels(labels):
         result[value].append(index)
     print(result)
 
-   
+# Loss Function
+def modularity_loss(U, A):
+    d = A.sum(1)
+    D = torch.outer(d, d) / A.sum()
+    B = A - D
+    M = -torch.trace(torch.matmul(U.T, torch.matmul(B, U))) / torch.norm(A, 1)
+    return M
+
+def regularizer(U, C):
+    reg = torch.sum((U.sum(0) - 1/C)**2)
+    return reg
+
+def community_detection_loss(U, A, C, lambda_reg):
+    M = modularity_loss(U, A)
+    R = regularizer(U, C)
+    loss = M + lambda_reg * R
+    return loss
