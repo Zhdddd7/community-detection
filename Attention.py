@@ -45,13 +45,17 @@ class GraphAttention(nn.Module):
         # Compute attention scores
         # queries = [batch_size, num_nodes, num_heads, head_dim]
         # keys = [batch_size, num_nodes, num_heads, head_dim]
-        # attention_scores = [batch_size, num_nodes,num_nodes_2, num_heads]
-        attention_scores = torch.einsum('bnqh,bmqh->bnmq', queries, keys)
+        # attention_scores = [batch_size,num_heads,num_nodes,num_nodes_2]
+        attention_scores = torch.einsum('bnqh,bmqh->bqnm', queries, keys)
         attention_scores = attention_scores / np.sqrt(self.head_dim)
-        attention_scores = F.softmax(attention_scores, dim=-1)
         
+        # Masking with adj
+        adj = adj.unsqueeze(1).repeat(1, self.num_heads, 1, 1)  # (batch_size, num_heads, num_nodes, num_nodes)
+        attention_scores = attention_scores.masked_fill(adj == 0, -1e9)
+        attention_scores = F.softmax(attention_scores, dim=-1)
+
         # Compute new node features
-        context = torch.einsum('bnmq,bmvh->bnqh', attention_scores, vals).contiguous()
+        context = torch.einsum('bqnm,bmvh->bnqh', attention_scores, vals).contiguous()
         context = context.view(batch_size, num_nodes, self.hidden)
         
         output_projected = self.output_proj(context)
@@ -114,7 +118,6 @@ num_nodes = G.number_of_nodes()
 adj = nx.to_numpy_array(G)  # 转换为邻接矩阵
 print('the node num is', num_nodes)
 
-# 为每个节点生成随机特征
 emb_size = 1000
 hidden = 128
 num_classes = 3
@@ -144,7 +147,7 @@ def train(model, node_features, num_epochs, saved = False):
         if saved:
             if (epoch +1) % 100 ==0:
                 file_path = "./models/"
-                torch.save(model, f"{file_path}attention_{epoch}_model.pt")
+                torch.save(model, f"{file_path}attention_{epoch}_model_withmask.pt")
                 print(f"the {epoch} model is saved.")
 
 num_epochs = 300
@@ -152,7 +155,7 @@ num_epochs = 300
 # train(model, node_features, num_epochs, True)
 
 # 输出最终的社区分配
-model_file = "./models/attention_299_model.pt"
+model_file = "./models/attention_299_model_withmask.pt"
 model = torch.load(model_file)
 logits = model(torch.tensor(adj, dtype=torch.float32).unsqueeze(0), node_features)
 predictions = model.predict(logits)

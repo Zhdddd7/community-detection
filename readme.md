@@ -45,6 +45,9 @@ We can annotate the graph nodes to get labels for each node.
 ## Node clustering
 Here we consider train embeddings for the node in a graph, the common method is to do sampling for each node sequence as sentence, each node as a word. Then the sentences and the words are trained in a Word2Vec framework.
 ### Louvain algorithm
+$$
+Q_{signed} = \frac{1}{2\omega}\sum_{i}\sum_{j}\Big [\omega_{ij} - (\frac{\omega_{i}^{+}\omega_{j}^{+}}{2\omega^{+}} -\frac{\omega_{i}^{+}\omega_{j}^{+}}{2\omega^{+}})\Big] \delta(C_i, C_j)
+$$
 1. For each node $i$, the algorithm considers moving it to the community of each of its neighbors $j$ and calculates the gain in modularity from such a move.   
 2. If moving node $i$ to the community of node $j$ results in a positive gain in modularity, the move is made.   
 3. This process is repeated iteratively for all nodes until no further improvement in modularity can be achieved by moving any single node.
@@ -90,9 +93,10 @@ R = \sum_{i = 1}^{C}(\sum_{j = 1}^{N}U_{ij} - \frac{1}{C})^2
 $$
 $$
 L_a = M + \lambda R\\
-L_a = -M + \lambda R
 $$
 ![graph-attention](./figures/Unsuper-GAT.png)
+using adjacent matrix as mask is efficient in handling sparse graphs, where we only focus on the existing edges and their relations.
+![graph-attention-with-mask](./figures/GAT-with-mask.png)
 ## Graph Classification
 Here we also consider make embeddings for the whole graph. The base training paradigm is the Doc2Vec model.
 ### Graph2Vec

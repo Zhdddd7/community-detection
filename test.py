@@ -11,5 +11,5 @@ from utils import k_tau_network, epsilon_network, draw_custom_colored_graph
 tau = 0.7
 K = 5
 G = k_tau_network(cor,tau, K)
-labels =[[0, 2, 4, 7, 14, 16, 19], [1, 8, 11, 12, 18],[3, 5, 6, 9, 10, 13, 15, 17]]
+labels =[[0, 1, 3, 7, 14, 16, 18],[2, 4, 8, 10, 12], [5, 6, 9, 11, 13, 15, 17, 19]]
 draw_custom_colored_graph(G, labels)
