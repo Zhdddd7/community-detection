@@ -9,6 +9,7 @@ print(f"the size of X_scaled is {X_scaled.shape}")
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.nn.functional as F
 
 class MLP(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim):
@@ -29,52 +30,29 @@ hidden_dim = 128
 output_dim = 64
 
 # 初始化模型
-model = MLP(input_dim, hidden_dim, output_dim)
-
-class ContrastiveLoss(nn.Module):
-    def __init__(self, margin):
-        super(ContrastiveLoss, self).__init__()
-        self.margin = margin
-    
-    def forward(self, output1, output2, label):
-        euclidean_distance = nn.functional.pairwise_distance(output1, output2)
-        loss_contrastive = torch.mean((1 - label) * torch.pow(euclidean_distance, 2) +
-                                      label * torch.pow(torch.clamp(self.margin - euclidean_distance, min=0.0), 2))
-        return loss_contrastive
-
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# model = MLP(input_dim, hidden_dim, output_dim).to(device)
+model = MLP(input_dim, hidden_dim, output_dim).to(device)
+from utils import DynamicContrastiveLoss
 margin = 1.0
-criterion = ContrastiveLoss(margin)
+criterion = DynamicContrastiveLoss(margin).to(device)
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-from torch.utils.data import Dataset, DataLoader
-
-class FunctionDataset(Dataset):
-    def __init__(self, X):
-        self.X = X
-    
-    def __len__(self):
-        return len(self.X)
-    
-    def __getitem__(self, idx):
-        x1 = self.X[idx]
-        x2 = self.X[(idx + 1) % len(self.X)]
-        label = torch.tensor(1.0 if idx % 2 == 0 else 0.0)
-        return x1, x2, label
+from dataCenter import FunctionDataset, DataLoader
 
 dataset = FunctionDataset(X_scaled)
 dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
-
 num_epochs = 300
+print(f"running on {device}")
 def train(num_epochs):
     for epoch in range(num_epochs):
-        for x1, x2, label in dataloader:
-            x1, x2, label = x1.float(), x2.float(), label.float()
-            
+        for x1, x2 in dataloader:     
             # 前向传播
+            x1 = x1.to(device)
+            x2 = x2.to(device)
             output1 = model(x1)
             output2 = model(x2)
-            loss = criterion(output1, output2, label)
-            
+            loss = criterion(output1, output2)           
             # 反向传播和优化
             optimizer.zero_grad()
             loss.backward()
@@ -83,7 +61,7 @@ def train(num_epochs):
         print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
 train(num_epochs)
 with torch.no_grad():
-    function_embeddings = model(torch.tensor(X_scaled).float()).numpy()
+    function_embeddings = model(torch.tensor(X_scaled, dtype=torch.float32).to(device)).cpu().numpy()
 from sklearn.cluster import KMeans
 kmeans = KMeans(n_clusters=3)  
 labels = kmeans.fit_predict(function_embeddings)

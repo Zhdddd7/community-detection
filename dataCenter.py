@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import torch
+from torch.utils.data import Dataset, DataLoader
 
 def data_generator(sample_dim = 1000):
     """
@@ -44,6 +46,23 @@ def data_generator(sample_dim = 1000):
     
     return res
 
+class FunctionDataset(Dataset):
+    def __init__(self, X):
+        self.X = X
+        self.num_samples = X.shape[0]
+    
+    def __len__(self):
+        return self.num_samples * (self.num_samples - 1)  # 所有可能的样本对
+    
+    def __getitem__(self, idx):
+        idx1 = idx // (self.num_samples - 1)
+        idx2 = idx % (self.num_samples - 1)
+        if idx2 >= idx1:
+            idx2 += 1  # 避免选择同一个样本作为正负对
+        
+        x1 = self.X[idx1]
+        x2 = self.X[idx2]
+        return torch.tensor(x1, dtype=torch.float32), torch.tensor(x2, dtype=torch.float32)
 # data = data_generator()
 # m = data.shape[1]
 # labels = [f'feature_{i}' for i in range(m)]
