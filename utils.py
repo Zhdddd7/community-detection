@@ -2,7 +2,8 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 import torch
-
+import copy
+from dataCenter import data_generator
 def k_tau_network(corr_matrix, tau, K, draw = False):
     """
     使用K-tau方法基于相关性矩阵构建网络图。
@@ -81,9 +82,6 @@ def epsilon_network(corr_matrix, epsilon, draw = False):
         plt.show()
     return G
 
-def sim_network(sim_matrix, draw = False):
-    pass
-
 def draw_custom_colored_graph(G, color_groups):
     """
     使用color-map来进行颜色映射，把其中一部分的节点映射到一个颜色，而其中的一些节点映射
@@ -127,3 +125,37 @@ def community_detection_loss(U, A, C, lambda_reg):
     R = regularizer(U, C)
     loss = M + lambda_reg * R
     return loss
+
+def corrupt(tensor):
+    y = copy.deepcopy(tensor)
+    print(f"the y type is {type(y)}; the size is {y.shape}")
+    for i in range(y.shape[1]):
+        y[:,i] = y[:,i][torch.randperm(y.shape[0])]
+    return y
+
+def build_contrast_dataset(train_num = 400, test_num = 100, generator = 1):
+    if generator ==1:
+        func = data_generator
+    train_data = func(train_num)
+    train_data = torch.FloatTensor(train_data) 
+    print(f"the train_data type is {type(train_data)}; the size is {train_data.shape}")
+    train_data_cor = corrupt(train_data)
+    train_data = torch.cat([train_data, train_data_cor], dim = 0)
+    train_label = torch.cat([torch.ones(train_num,), torch.zeros(train_num,)], dim=0)[:,None]
+
+    test_data = func(test_num)
+    print(f"the test_data type is {type(test_data)}; the size is {test_data.shape}")
+    test_data = torch.FloatTensor(test_data)
+    test_data_cor = corrupt(test_data)
+    test_data = torch.cat([test_data, test_data_cor], dim = 0)
+    test_label = torch.cat([torch.ones(test_num,), torch.zeros(test_num,)], dim=0)[:,None]
+
+    dataset = {}
+    dataset['train_input'] = train_data
+    dataset['test_input'] = test_data
+    dataset['train_label'] = train_label
+    dataset['test_label'] = test_label
+
+    return dataset
+
+

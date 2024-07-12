@@ -5,34 +5,33 @@ def data_generator(sample_dim = 1000):
     """
     产生一个sample_dim * 20维的数组
     """
-    sample_dim = 1000
     # [x1, x2,...xm]
     # 每一个x服从正态分布
     m = 10
     samples = np.zeros((m, sample_dim))
     for i in range(samples.shape[0]):
         samples[i] = np.random.randn(sample_dim)
-        
+    
     # 定义函数
     def func0(x): return x[0] + x[1]
     def func1(x): return x[2] - x[0]
-    def func2(x): return x[4] * x[5]
+    def func2(x): return x[7] * x[8]
     def func3(x): return x[6] + x[8] + x[7]
     def func4(x): return x[0]**2 + 2*x[0]*x[1] + x[1]**2
     def func5(x): return 6* (x[4] )
-    def func6(x): return np.exp(x[3] + x[2])
-    def func7(x): return x[4] + x[5] - x[6]
-    def func8(x): return x[7] * x[8] * x[6]
-    def func9(x): return x[0]**3 + 3*x[0]**2*x[1] + 3*x[0]*x[1]**2 + x[1]**3
-    def func10(x): return 5* (x[2] + x[3] )
+    def func6(x): return np.exp(x[4] + x[5])
+    def func7(x): return x[8] + x[7] - x[6]
+    def func8(x): return x[0] * x[1] * x[2]
+    def func9(x): return x[7]**3 + 3*x[7]**2*x[8] + 3*x[7]*x[6]**2 + x[8]**3
+    def func10(x): return 5* (x[2] + x[0] )
     def func11(x): return np.exp(x[4] - x[5])
-    def func12(x): return x[0]**2 - x[1]**2
+    def func12(x): return x[7]**2 - x[8]**2
     def func13(x): return  - x[0] -x[1]
     def func14(x): return x[1] * x[2] + x[0]
     def func15(x): return x[4]**2 + 2*x[4]*x[5] - x[5]**2
     def func16(x): return 0.5 * (x[6] * x[7] )
     def func17(x): return np.exp(x[6]* x[7])
-    def func18(x): return x[0] - x[1] + x[2]
+    def func18(x): return x[6] - x[7] + x[8]
     def func19(x): return -x[0] - 0.2* x[1]
 
     functions = [func1, func2, func3, func4, func5, func6, func7, func8, func9, func10,

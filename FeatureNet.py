@@ -1,3 +1,4 @@
+# use Node2Vec + Kmeans
 import os
 import torch
 import torch.nn as nn

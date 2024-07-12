@@ -1,0 +1,3 @@
+init => 0
+0 => fix_symbolic => 1
+1 => train => 2
