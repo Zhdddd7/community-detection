@@ -1,4 +1,3 @@
-
 from utils import draw_custom_colored_graph
 from dataCenter import data_generator
 data = data_generator()

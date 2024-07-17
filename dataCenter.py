@@ -3,12 +3,13 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-def data_generator(sample_dim = 1000):
+def data_generator(sample_dim = 1000, seed = 42):
     """
     产生一个sample_dim * 20维的数组
     """
     # [x1, x2,...xm]
     # 每一个x服从正态分布
+    np.random.seed(seed)
     m = 10
     samples = np.zeros((m, sample_dim))
     for i in range(samples.shape[0]):
@@ -45,6 +46,30 @@ def data_generator(sample_dim = 1000):
     res = res.T
     
     return res
+
+
+def fill_random_zeros(matrix, nan_rate, seed = 42):
+    """
+    Fill n random positions in the given matrix with 0.
+    
+    Parameters:
+    matrix (np.array): Input matrix
+    n (int): Number of zeros to be placed randomly
+    
+    Returns:
+    np.array: New matrix with n random positions filled with 0
+    """
+    new_matrix = matrix.copy()
+    total_elements = new_matrix.size
+    n = int(total_elements * nan_rate)
+
+    if nan_rate > 1:
+        raise ValueError("n is larger than the total number of elements in the matrix")
+    np.random.seed(seed)
+    random_positions = np.random.choice(total_elements, n, replace=False)
+    random_positions_2d = np.unravel_index(random_positions, new_matrix.shape)
+    new_matrix[random_positions_2d] = 0
+    return new_matrix
 
 class FunctionDataset(Dataset):
     def __init__(self, X):

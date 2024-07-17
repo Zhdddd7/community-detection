@@ -1,10 +1,10 @@
 from sklearn.preprocessing import StandardScaler
 from dataCenter import data_generator
 
-X = data_generator()
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X).T
-print(f"the size of X_scaled is {X_scaled.shape}")
+# X = data_generator()
+# scaler = StandardScaler()
+# X_scaled = scaler.fit_transform(X).T
+# print(f"the size of X_scaled is {X_scaled.shape}")
 
 import torch
 import torch.nn as nn
@@ -24,27 +24,33 @@ class MLP(nn.Module):
         out = self.fc2(out)
         return out
 
-# 参数设置
-input_dim = 1000
-hidden_dim = 128
-output_dim = 64
+# # 参数设置
+# input_dim = 1000
+# hidden_dim = 128
+# output_dim = 64
 
-# 初始化模型
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# # 初始化模型
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# # model = MLP(input_dim, hidden_dim, output_dim).to(device)
 # model = MLP(input_dim, hidden_dim, output_dim).to(device)
-model = MLP(input_dim, hidden_dim, output_dim).to(device)
 from utils import DynamicContrastiveLoss
-margin = 1.0
-criterion = DynamicContrastiveLoss(margin).to(device)
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+# margin = 1.0
+# criterion = DynamicContrastiveLoss(margin).to(device)
+# optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 from dataCenter import FunctionDataset, DataLoader
 
-dataset = FunctionDataset(X_scaled)
-dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
-num_epochs = 300
-print(f"running on {device}")
-def train(num_epochs):
+# dataset = FunctionDataset(X_scaled)
+# dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
+# num_epochs = 300
+# print(f"running on {device}")
+def train(model, X, num_epochs, saved = False):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    dataset = FunctionDataset(X)
+    margin = 1.0
+    dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
+    criterion = DynamicContrastiveLoss(margin).to(device)
+    optimizer = optim.Adam(model.parameters(), lr=0.001)  
     for epoch in range(num_epochs):
         for x1, x2 in dataloader:     
             # 前向传播
@@ -57,13 +63,16 @@ def train(num_epochs):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        
         print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
-train(num_epochs)
-with torch.no_grad():
-    function_embeddings = model(torch.tensor(X_scaled, dtype=torch.float32).to(device)).cpu().numpy()
-from sklearn.cluster import KMeans
-kmeans = KMeans(n_clusters=3)  
-labels = kmeans.fit_predict(function_embeddings)
-from utils import print_labels
-print_labels(labels)
+        if saved:
+            if (epoch +1) % 100 ==0:
+                dir = "models"
+                torch.save(model, f"{dir}/MLP_epoch_{epoch}_model.pt")
+# train(num_epochs)
+# with torch.no_grad():
+#     function_embeddings = model(torch.tensor(X_scaled, dtype=torch.float32).to(device)).cpu().numpy()
+# from sklearn.cluster import KMeans
+# kmeans = KMeans(n_clusters=3)  
+# labels = kmeans.fit_predict(function_embeddings)
+# from utils import print_labels
+# print_labels(labels)
